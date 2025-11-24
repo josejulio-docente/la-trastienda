@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIKE | Frutería & Jurisprudencia</title>
+    
+    <!-- Favicon: Círculo Melón con 'P' Serif -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23FF6B35'/><text x='50' y='75' font-family='Georgia, serif' font-weight='bold' font-style='italic' font-size='70' text-anchor='middle' fill='%230a0a0a'>P</text></svg>">
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400;1,600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cream': '#f2f0eb',
+                        'black': '#0a0a0a',
+                        'melon': '#FF6B35', // Naranja intenso, casi quemado
+                        'blood': '#4a0404'
+                    },
+                    fontFamily: {
+                        'display': ['Syne', 'sans-serif'],
+                        'serif': ['Playfair Display', 'serif'],
+                    },
+                    cursor: {
+                        'none': 'none',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* BASE & RESET */
+        body {
+            background-color: #f2f0eb;
+            color: #0a0a0a;
+            cursor: none; /* Ocultamos cursor nativo */
+            overflow-x: hidden;
+            font-feature-settings: "ss01", "dlig";
+        }
+
+        /* CUSTOM CURSOR */
+        #cursor {
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            background-color: #FF6B35;
+            border-radius: 50%;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
+            mix-blend-mode: difference;
+        }
+        #cursor.hovered {
+            width: 80px;
+            height: 80px;
+            background-color: transparent;
+            border: 2px solid #FF6B35;
+        }
+
+        /* TYPOGRAPHY UTILS */
+        .text-giant {
+            font-size: clamp(3rem, 15vw, 18rem);
+            line-height: 0.8;
+            letter-spacing: -0.05em;
+        }
+        
+        /* MARQUEE ANIMATION */
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .marquee-content {
+            display: inline-block;
+            animation: scroll 20s linear infinite;
+        }
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* REVEAL ANIMATIONS */
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ACCORDION */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* SHAPES */
+        .fruit-shape {
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            animation: morph 8s ease-in-out infinite;
+        }
+        @keyframes morph {
+            0%, 100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+            34% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; }
+            67% { border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%; }
+        }
+
+        /* GRAIN OVERLAY */
+        .grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9000;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-melon selection:text-cream">
+
+    <!-- Cursor -->
+    <div id="cursor"></div>
+    
+    <!-- Grain Overlay -->
+    <div class="grain"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full p-8 flex justify-between items-center z-50 mix-blend-difference text-cream">
+        <span class="font-display font-bold text-xl tracking-tighter">PIKE ©</span>
+        <a href="#metodo" class="interactable font-serif italic text-lg hover:underline decoration-melon decoration-2 underline-offset-4">La Trastienda</a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="min-h-screen flex flex-col justify-end relative px-4 md:px-12 pb-20 pt-32 overflow-hidden border-b border-black">
+        <div class="absolute top-1/4 right-0 w-[50vw] h-[50vw] bg-melon opacity-20 blur-[100px] rounded-full pointer-events-none"></div>
+        
+        <div class="z-10 relative mb-12">
+            <h1 class="font-display font-bold text-giant uppercase leading-none text-black reveal-text">
+                Ellas <br>
+                <span class="font-serif italic text-melon font-light block ml-12 md:ml-32">Confiesan.</span>
+                Yo Dicto <br>
+                Sentencia.
+            </h1>
+        </div>
+
+        <!-- CORRECCIÓN: Eliminado absolute bottom-12, añadido margin-top y flow relativo -->
+        <div class="z-10 relative max-w-md ml-4 md:ml-12 mt-8 reveal-text" style="transition-delay: 0.2s;">
+            <p class="font-serif italic text-xl md:text-2xl leading-tight">
+                "Lo que las mujeres susurran cuando creen que nadie escucha, 
+                filtrado por un abogado reformado que ahora pesa higos."
+            </p>
+        </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <section class="bg-black text-cream py-12 md:py-24 overflow-hidden rotate-1 mt-[-2px]">
+        <div class="marquee-container font-display font-bold text-6xl md:text-9xl uppercase tracking-tighter">
+            <div class="marquee-content">
+                 &nbsp;El Monstruo es necesario — No seas vainilla — Depravación Gourmet — Instinto vs. Ideología — El Monstruo es necesario — No seas vainilla — Depravación Gourmet — Instinto vs. Ideología
+            </div>
+            <div class="marquee-content" aria-hidden="true">
+                 &nbsp;El Monstruo es necesario — No seas vainilla — Depravación Gourmet — Instinto vs. Ideología — El Monstruo es necesario — No seas vainilla — Depravación Gourmet — Instinto vs. Ideología
+            </div>
+        </div>
+    </section>
+
+    <!-- MANIFIESTO -->
+    <section class="py-32 px-4 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-12 items-start relative">
+        <!-- Background Shape -->
+        <div class="absolute left-[-10%] top-[20%] w-[30vw] h-[40vh] bg-black fruit-shape opacity-5 z-0"></div>
+
+        <div class="md:col-span-4 z-10 sticky top-32 reveal-text">
+            <h2 class="font-display font-bold text-5xl md:text-7xl mb-6">EL JUEZ<br><span class="text-melon">DE LA FRUTA</span></h2>
+            <div class="w-full h-[1px] bg-black mb-6"></div>
+            <p class="font-serif italic text-lg opacity-70">Expediente Nº: 00-PIKE-24</p>
+        </div>
+
+        <div class="md:col-span-8 space-y-12 z-10 text-xl md:text-3xl font-light leading-snug reveal-text">
+            <p>
+                Cambié la toga por el delantal. Me di cuenta de que en los juzgados la gente miente bajo juramento, pero en mi frutería, <strong class="font-display font-bold text-melon interactable">mientras tocan los melones</strong>, confiesan sus pecados más oscuros.
+            </p>
+            <p>
+                Vengo del mundo de las leyes, pero ahora aplico la ley de la selva. Escucho a tus novias, a tus esposas y a las que "no son nada tuyo". Me cuentan lo que falta en casa. Me hablan de ese vacío que no llena un ramo de rosas ni una cena en París.
+            </p>
+            <p class="font-serif italic border-l-4 border-melon pl-8">
+                "Buscan un roble, no una caña de bambú. Buscan un monstruo que las proteja del mundo, incluso de sí mismas."
+            </p>
+            <p>
+                He decodificado sus instintos primitivos. Ellas viven en una disonancia cognitiva constante: su ideología pide igualdad, <strong class="font-display font-bold">pero su biología pide sentencia firme.</strong>
+            </p>
+        </div>
+    </section>
+
+    <!-- INSIGHTS (ACCORDION) -->
+    <section class="min-h-screen bg-black text-cream px-4 md:px-12 py-32 relative">
+        <h3 class="font-display font-bold text-[12vw] leading-none mb-24 opacity-20 text-center select-none">EVIDENCIA</h3>
+
+        <div class="max-w-4xl mx-auto space-y-0 border-t border-cream/30">
+            
+            <!-- Item 1 -->
+            <div class="accordion-item border-b border-cream/30 group">
+                <button class="w-full py-12 flex justify-between items-center text-left interactable focus:outline-none">
+                    <span class="font-serif italic text-melon text-xl md:text-2xl mr-4">Art. 1</span>
+                    <h4 class="font-display font-bold text-3xl md:text-5xl uppercase group-hover:text-melon transition-colors">La paradoja de la bestia</h4>
+                    <span class="text-4xl font-light transform transition-transform duration-300 group-hover:rotate-45">+</span>
+                </button>
+                <div class="accordion-content">
+                    <div class="pb-12 text-lg md:text-xl font-light opacity-80 leading-relaxed max-w-2xl ml-auto">
+                        <p class="mb-6">
+                            Ellas quieren un hombre peligroso, pero domesticado *solo* para ellas. Es la fantasía de "La Bella y la Bestia". Si eres inofensivo con el mundo, eres invisible para ella. 
+                        </p>
+                        <p>
+                            <strong>El Veredicto de Pike:</strong> Tienes que ser capaz de destruir, pero elegir no hacerlo. Si no tienes colmillos, tu bondad no es virtud, es falta de opciones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="accordion-item border-b border-cream/30 group">
+                <button class="w-full py-12 flex justify-between items-center text-left interactable focus:outline-none">
+                    <span class="font-serif italic text-melon text-xl md:text-2xl mr-4">Art. 2</span>
+                    <h4 class="font-display font-bold text-3xl md:text-5xl uppercase group-hover:text-melon transition-colors">Gourmet Egoísta</h4>
+                    <span class="text-4xl font-light transform transition-transform duration-300 group-hover:rotate-45">+</span>
+                </button>
+                <div class="accordion-content">
+                    <div class="pb-12 text-lg md:text-xl font-light opacity-80 leading-relaxed max-w-2xl ml-auto">
+                        <p class="mb-6">
+                            No lo hagas por complacerla (actitud de sirviente). Hazlo porque eres un depravado que disfruta del festín. La diferencia entre un "buen chico" y un "monstruo sexual" es el egoísmo virtuoso.
+                        </p>
+                        <p>
+                            <strong>El Veredicto de Pike:</strong> Cómete la fruta con la voracidad de un náufrago. Mánchate. Haz ruido. Que ella sienta que es tu juguete, no tu jefa.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="accordion-item border-b border-cream/30 group">
+                <button class="w-full py-12 flex justify-between items-center text-left interactable focus:outline-none">
+                    <span class="font-serif italic text-melon text-xl md:text-2xl mr-4">Art. 3</span>
+                    <h4 class="font-display font-bold text-3xl md:text-5xl uppercase group-hover:text-melon transition-colors">Programación Neurolingüística</h4>
+                    <span class="text-4xl font-light transform transition-transform duration-300 group-hover:rotate-45">+</span>
+                </button>
+                <div class="accordion-content">
+                    <div class="pb-12 text-lg md:text-xl font-light opacity-80 leading-relaxed max-w-2xl ml-auto">
+                        <p class="mb-6">
+                            El marco de la relación nace en la cama. Si dictas sentencia bajo las sábanas, ella acatará el fallo en la cocina. El dominio sexual reconfigura la jerarquía emocional.
+                        </p>
+                        <p>
+                            <strong>El Veredicto de Pike:</strong> Haz que repita tus palabras mientras la llevas al límite. Ahí es donde se firma el contrato de lealtad.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 4 -->
+            <div class="accordion-item border-b border-cream/30 group">
+                <button class="w-full py-12 flex justify-between items-center text-left interactable focus:outline-none">
+                    <span class="font-serif italic text-melon text-xl md:text-2xl mr-4">Art. 4</span>
+                    <h4 class="font-display font-bold text-3xl md:text-5xl uppercase group-hover:text-melon transition-colors">El fantasma del Ex</h4>
+                    <span class="text-4xl font-light transform transition-transform duration-300 group-hover:rotate-45">+</span>
+                </button>
+                <div class="accordion-content">
+                    <div class="pb-12 text-lg md:text-xl font-light opacity-80 leading-relaxed max-w-2xl ml-auto">
+                        <p class="mb-6">
+                            ¿Por qué vuelve con el ex tóxico? Porque el ex la hizo sentir cosas que tú, con tus velas y tu "sexo vainilla", no puedes ni imaginar. 
+                        </p>
+                        <p>
+                            <strong>El Veredicto de Pike:</strong> Conviértete en la experiencia que ninguna otra relación futura pueda igualar. Sé el estándar imposible de superar.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- CTA / MÉTODO -->
+    <section id="metodo" class="py-32 px-4 md:px-12 flex flex-col items-center justify-center min-h-[80vh] bg-cream relative overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute top-0 right-0 w-full h-full bg-grid-black/[0.05]"></div>
+        <div class="absolute w-[600px] h-[600px] bg-melon rounded-full blur-[150px] opacity-20 animate-pulse"></div>
+
+        <div class="z-10 text-center max-w-5xl reveal-text">
+            <h2 class="font-display font-black text-6xl md:text-8xl uppercase mb-8">
+                ¿Te atreves a<br>entrar en la <span class="text-transparent bg-clip-text bg-gradient-to-r from-melon to-blood">trastienda?</span>
+            </h2>
+            <p class="font-serif italic text-2xl md:text-3xl mb-12 text-gray-700">
+                Deja de ser un opositor a la vida. Empieza a ejercer.
+            </p>
+            
+            <a href="#" class="interactable relative inline-block group">
+                <span class="relative z-10 block px-12 py-6 bg-black text-cream font-display font-bold text-2xl uppercase tracking-wider overflow-hidden border-2 border-transparent group-hover:border-black group-hover:text-black transition-colors duration-300">
+                    Solicitar Iniciación
+                </span>
+                <div class="absolute inset-0 bg-melon transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out z-0"></div>
+            </a>
+            
+            <p class="mt-8 text-sm font-mono opacity-50 uppercase tracking-widest">
+                * Acceso restringido. Solo para quienes están listos para mancharse.
+            </p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-black text-cream px-4 md:px-12 py-24 border-t border-gray-800">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div>
+                <a href="mailto:confesiones@pike.com" class="interactable font-display font-bold text-4xl md:text-6xl hover:text-melon transition-colors break-words">
+                    confesiones@pike.com
+                </a>
+            </div>
+            <div class="flex flex-col justify-end md:items-end font-serif italic text-xl">
+                <p>La Frutería de Pike.</p>
+                <p>Calle del Pecado Original, S/N.</p>
+                <div class="mt-8 font-mono text-xs text-gray-500 uppercase">
+                    © 2024 Pike. Todos los derechos reservados (y juzgados).
+                </div>
+            </div>
+        </div>
+        <div class="mt-24 text-[15vw] leading-none font-display font-bold text-gray-900 select-none text-center">
+            PIKE
+        </div>
+    </footer>
+
+    <!-- JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cursor = document.getElementById('cursor');
+            const interactables = document.querySelectorAll('.interactable');
+            const revealElements = document.querySelectorAll('.reveal-text');
+            const accordions = document.querySelectorAll('.accordion-item');
+
+            // 1. CUSTOM CURSOR LOGIC
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
+
+            interactables.forEach(el => {
+                el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+                el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+            });
+
+            // 2. INTERSECTION OBSERVER FOR REVEALS
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: "0px 0px -50px 0px"
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, observerOptions);
+
+            revealElements.forEach(el => observer.observe(el));
+
+            // 3. ACCORDION LOGIC
+            accordions.forEach(item => {
+                const btn = item.querySelector('button');
+                const content = item.querySelector('.accordion-content');
+                const icon = item.querySelector('span:last-child');
+
+                btn.addEventListener('click', () => {
+                    // Close all others
+                    accordions.forEach(otherItem => {
+                        if (otherItem !== item) {
+                            otherItem.querySelector('.accordion-content').style.maxHeight = null;
+                            otherItem.querySelector('span:last-child').style.transform = 'rotate(0deg)';
+                            otherItem.querySelector('h4').classList.remove('text-melon');
+                        }
+                    });
+
+                    // Toggle current
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                        item.querySelector('h4').classList.remove('text-melon');
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(45deg)';
+                        item.querySelector('h4').classList.add('text-melon');
+                    }
+                });
+            });
+
+            // 4. PARALLAX EFFECT ON SCROLL (Simple implementation)
+            window.addEventListener('scroll', () => {
+                const scrolled = window.scrollY;
+                const marquee = document.querySelector('.marquee-container');
+                if(marquee) {
+                    // Accelera un poco el marquee al hacer scroll
+                    marquee.style.transform = `translateX(${scrolled * -0.1}px)`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
